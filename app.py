@@ -108,6 +108,7 @@ with st.sidebar:
                 if success:
                     logger.info("Successfully connected to LLM.")
                     st.success("Connected!")
+                    st.toast("LLM connection established!", icon="✅")
                     # Create the LangGraph agent
                     st.session_state.graph = build_graph(llm)
                     st.session_state.session_id = str(uuid.uuid4()) # Reset session on new connect
@@ -116,9 +117,11 @@ with st.sidebar:
                 else:
                     logger.error(f"Failed to connect to LLM: {msg}")
                     st.error(msg)
+                    st.toast("LLM connection failed!", icon="❌")
         except Exception as e:
             logger.exception(f"Configuration Error: {str(e)}")
             st.error(f"Configuration Error: {str(e)}")
+            st.toast("Configuration error occurred!", icon="⚠️")
 
     st.divider()
     st.markdown("### Session")
@@ -180,8 +183,16 @@ def run_graph(inputs: Any, is_resume: bool = False):
             return result
 
     except Exception as e:
-        logger.exception(f"Graph execution failed: {str(e)}")
-        st.error(f"Graph execution failed: {str(e)}")
+        error_msg = str(e)
+        if "timeout" in error_msg.lower():
+            logger.error(f"Graph execution timeout: {error_msg}")
+            st.error("LLM Request Timeout: The provider took too long to respond. Please try again.")
+            st.toast("LLM Timeout!", icon="⏳")
+        else:
+            logger.exception(f"Graph execution failed: {error_msg}")
+            st.error(f"Graph execution failed: {error_msg}")
+            st.toast("Execution error!", icon="❌")
+            
         st.session_state.is_running = False
         return None
 

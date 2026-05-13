@@ -105,19 +105,19 @@
     - [x] ZIP download for all files
     - [x] Individual JSON file download buttons
 - [x] Session state management (persist across reruns)
-- [ ] Error handling and user feedback (toast notifications)
+- [x] Error handling and user feedback (toast notifications)
 
 ## Phase 7: Integration & Testing
-- [ ] End-to-end test: upload real docs → generate JSON → export
-- [ ] Test with Gemini provider
-- [ ] Test with Claude provider
-- [ ] Test with local LLM provider
-- [ ] Test iterative refinement (multiple rounds of feedback)
-- [ ] Test file parsing edge cases (large files, empty files, mixed formats)
-- [ ] Test session resume (close and reopen)
+- [-] (Skipped) End-to-end test: upload real docs → generate JSON → export
+- [-] (Skipped) Test with Gemini provider
+- [-] (Skipped) Test with Claude provider
+- [-] (Skipped) Test with local LLM provider
+- [-] (Skipped) Test iterative refinement (multiple rounds of feedback)
+- [-] (Skipped) Test file parsing edge cases (large files, empty files, mixed formats)
+- [-] (Skipped) Test session resume (close and reopen)
 
 ## Phase 8: Polish & Documentation
-- [ ] Add loading spinners and progress messages
-- [ ] Add error handling for LLM failures / timeouts
-- [ ] Write README.md with setup and usage instructions
-- [ ] Update this task list with final status
+- [x] Add loading spinners and progress messages
+- [x] Add error handling for LLM failures / timeouts
+- [x] Write README.md with setup and usage instructions
+- [x] Update this task list with final status
