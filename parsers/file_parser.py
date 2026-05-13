@@ -18,6 +18,10 @@ from typing import Optional
 import pandas as pd
 from bs4 import BeautifulSoup
 
+from utils.logger import setup_logger
+
+logger = setup_logger("file_parser")
+
 
 @dataclass
 class ParsedDocument:
@@ -224,6 +228,7 @@ def parse_file(file_bytes: bytes, filename: str) -> ParsedDocument:
         )
 
     file_type, parser_fn = PARSER_MAP[ext]
+    logger.debug(f"Parsing file '{filename}' as {file_type}")
     content = parser_fn(file_bytes, filename)
 
     return ParsedDocument(
@@ -249,7 +254,9 @@ def parse_multiple_files(
     documents = []
     for file_bytes, filename in files:
         try:
+            logger.info(f"Attempting to parse: {filename}")
             doc = parse_file(file_bytes, filename)
+            logger.info(f"Successfully parsed {filename} ({doc.char_count} chars)")
             documents.append(doc)
         except ValueError as e:
             # Include unsupported files with an error message so the user sees feedback

@@ -16,6 +16,9 @@ from langgraph.types import interrupt
 from agent.prompts.templates import JSON_REFINEMENT_PROMPT, SYSTEM_PROMPT
 from agent.state import AgentState
 from schemas.portal_schema import GeneratedOutput, PortalContext, Workflow
+from utils.logger import setup_logger
+
+logger = setup_logger("json_refiner")
 
 
 def create_json_refiner(llm: BaseChatModel):
@@ -42,6 +45,7 @@ def create_json_refiner(llm: BaseChatModel):
         current_json_str = json.dumps(current_json_obj, indent=2)
 
         # 1. Pause execution and present JSON for review
+        logger.info("Interrupting graph execution to allow user to review the generated JSON.")
         user_response = interrupt({
             "action": "review_json",
             "portal_context": portal_context,
@@ -53,6 +57,7 @@ def create_json_refiner(llm: BaseChatModel):
         action = user_response.get("action")
         
         if action == "approve":
+            logger.info("User approved the generated JSON. Graph complete.")
             # Flow goes to END
             return {
                 "phase": "complete",
@@ -74,10 +79,13 @@ def create_json_refiner(llm: BaseChatModel):
 
             try:
                 # Ask LLM to apply changes and output the new structured JSON
+                logger.info("Invoking LLM to refine JSON based on user feedback...")
                 output: GeneratedOutput = structured_llm.invoke(messages)
 
                 portal_info_dict = output.get_portal_info_dict()
                 new_workflows = [wf.model_dump(mode="json") for wf in output.workflows]
+                
+                logger.info("JSON refinement successful.")
 
                 return {
                     "portal_context": portal_info_dict,
@@ -89,6 +97,7 @@ def create_json_refiner(llm: BaseChatModel):
                 }
 
             except Exception as e:
+                logger.exception(f"JSON refinement failed: {str(e)}")
                 return {
                     "error": f"JSON refinement failed: {str(e)}",
                     "phase": "error",

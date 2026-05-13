@@ -14,6 +14,9 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from agent.prompts.templates import JSON_GENERATION_PROMPT, SYSTEM_PROMPT
 from agent.state import AgentState
 from schemas.portal_schema import GeneratedOutput
+from utils.logger import setup_logger
+
+logger = setup_logger("json_generator")
 
 
 def create_json_generator(llm: BaseChatModel):
@@ -51,11 +54,14 @@ def create_json_generator(llm: BaseChatModel):
 
         try:
             # Generate the structured output
+            logger.info("Invoking LLM to generate structured JSON context...")
             output: GeneratedOutput = structured_llm.invoke(messages)
 
             # Store the resulting data in the state
             portal_info_dict = output.get_portal_info_dict()
             workflows = [wf.model_dump(mode="json") for wf in output.workflows]
+            
+            logger.info(f"Successfully generated JSON for portal and {len(workflows)} workflows.")
 
             return {
                 "portal_context": portal_info_dict,
@@ -65,6 +71,7 @@ def create_json_generator(llm: BaseChatModel):
             }
 
         except Exception as e:
+            logger.exception(f"JSON generation failed: {str(e)}")
             return {
                 "error": f"JSON generation failed: {str(e)}",
                 "phase": "error",

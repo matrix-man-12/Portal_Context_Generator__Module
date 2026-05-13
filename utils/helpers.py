@@ -16,6 +16,10 @@ from typing import Optional
 
 from langchain_core.language_models import BaseChatModel
 
+from utils.logger import setup_logger
+
+logger = setup_logger("helpers")
+
 
 # ---------------------------------------------------------------------------
 # LLM Provider Factory
@@ -108,9 +112,12 @@ def test_llm_connection(llm: BaseChatModel) -> tuple[bool, str]:
         (success: bool, message: str)
     """
     try:
+        logger.info("Testing LLM connection...")
         response = llm.invoke("Say 'OK' if you can hear me.")
+        logger.info("LLM connection test successful.")
         return True, f"Connected successfully. Response: {response.content[:100]}"
     except Exception as e:
+        logger.error(f"LLM connection test failed: {str(e)}")
         return False, f"Connection failed: {str(e)}"
 
 
@@ -138,6 +145,7 @@ def create_zip_export(
         ZIP file as bytes.
     """
     buffer = io.BytesIO()
+    logger.info(f"Creating ZIP export with portal info and {len(workflow_files)} workflows.")
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         # Write portal info
         zf.writestr(

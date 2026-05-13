@@ -14,6 +14,9 @@ from langgraph.types import interrupt
 
 from agent.prompts.templates import QUESTION_GENERATION_PROMPT, SYSTEM_PROMPT
 from agent.state import AgentState
+from utils.logger import setup_logger
+
+logger = setup_logger("question_generator")
 
 
 def create_question_generator(llm: BaseChatModel):
@@ -44,6 +47,7 @@ def create_question_generator(llm: BaseChatModel):
 
         try:
             # 1. Ask LLM to generate questions
+            logger.info("Invoking LLM to generate clarifying questions...")
             response = llm.invoke(messages)
             questions_text = response.content
 
@@ -51,9 +55,12 @@ def create_question_generator(llm: BaseChatModel):
             # In a real app, you might want structured output here too, but raw text is fine
             # for displaying in a chat interface.
             questions = [q.strip() for q in questions_text.split("\n") if q.strip()]
+            
+            logger.info(f"Generated {len(questions)} questions.")
 
             # 2. Pause execution and ask the user
             # The payload we pass to interrupt() is what the UI will see
+            logger.info("Interrupting graph execution to ask user for clarifications.")
             user_response = interrupt({
                 "action": "ask_user",
                 "questions": questions,
@@ -65,6 +72,8 @@ def create_question_generator(llm: BaseChatModel):
             # user_response will be the payload passed to Command(resume=...)
             answers = user_response.get("answers", [])
             raw_answers = user_response.get("raw_text", "No answers provided.")
+            
+            logger.info("Resumed graph execution with user answers.")
 
             return {
                 "questions": questions,
@@ -77,6 +86,7 @@ def create_question_generator(llm: BaseChatModel):
             }
 
         except Exception as e:
+            logger.exception(f"Question generation failed: {str(e)}")
             return {
                 "error": f"Question generation failed: {str(e)}",
                 "phase": "error",

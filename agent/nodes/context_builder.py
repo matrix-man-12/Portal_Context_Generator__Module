@@ -14,6 +14,9 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from agent.nodes.document_processor import get_consolidated_docs_text
 from agent.prompts.templates import DOCUMENT_ANALYSIS_PROMPT, SYSTEM_PROMPT
 from agent.state import AgentState
+from utils.logger import setup_logger
+
+logger = setup_logger("context_builder")
 
 
 def create_context_builder(llm: BaseChatModel):
@@ -47,8 +50,10 @@ def create_context_builder(llm: BaseChatModel):
         ]
 
         try:
+            logger.info("Invoking LLM to build portal context analysis...")
             response = llm.invoke(messages)
             analysis = response.content
+            logger.info(f"LLM analysis complete. Generated {len(analysis)} characters.")
 
             return {
                 "analysis": analysis,
@@ -59,6 +64,7 @@ def create_context_builder(llm: BaseChatModel):
                 ],
             }
         except Exception as e:
+            logger.exception(f"LLM analysis failed: {str(e)}")
             return {
                 "error": f"LLM analysis failed: {str(e)}",
                 "phase": "error",

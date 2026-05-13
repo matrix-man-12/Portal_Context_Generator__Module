@@ -8,6 +8,9 @@ single formatted text block ready for LLM analysis.
 from __future__ import annotations
 
 from agent.state import AgentState
+from utils.logger import setup_logger
+
+logger = setup_logger("document_processor")
 
 
 def document_processor(state: AgentState) -> dict:
@@ -20,10 +23,13 @@ def document_processor(state: AgentState) -> dict:
     documents = state.get("documents", [])
 
     if not documents:
+        logger.warning("No documents found in state.")
         return {
             "phase": "error",
             "error": "No documents uploaded. Please upload at least one document.",
         }
+
+    logger.info(f"Processing {len(documents)} documents for LLM consumption.")
 
     # Build consolidated document text
     doc_parts = []
@@ -45,10 +51,13 @@ def document_processor(state: AgentState) -> dict:
     # Truncate if too long (rough limit for context window safety)
     MAX_CHARS = 200_000
     if len(consolidated) > MAX_CHARS:
+        logger.warning(f"Consolidated text exceeded {MAX_CHARS} chars, truncating.")
         consolidated = consolidated[:MAX_CHARS] + (
             f"\n\n[TRUNCATED — original content was {len(consolidated)} chars, "
             f"showing first {MAX_CHARS}]"
         )
+    
+    logger.info(f"Document processing complete. Total length: {len(consolidated)} chars.")
 
     return {
         "documents": documents,  # Pass through unchanged

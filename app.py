@@ -22,6 +22,9 @@ from utils.helpers import (
     sanitize_filename,
     test_llm_connection,
 )
+from utils.logger import setup_logger
+
+logger = setup_logger("app")
 
 
 # ---------------------------------------------------------------------------
@@ -92,6 +95,7 @@ with st.sidebar:
     # Initialize Graph Button
     if st.button("🔌 Connect & Initialize"):
         try:
+            logger.info(f"Connecting to LLM provider: {provider}")
             with st.spinner("Connecting to LLM..."):
                 llm = create_llm(
                     provider=provider,
@@ -102,6 +106,7 @@ with st.sidebar:
                 success, msg = test_llm_connection(llm)
 
                 if success:
+                    logger.info("Successfully connected to LLM.")
                     st.success("Connected!")
                     # Create the LangGraph agent
                     st.session_state.graph = build_graph(llm)
@@ -109,8 +114,10 @@ with st.sidebar:
                     st.session_state.messages = []
                     st.session_state.current_interrupt = None
                 else:
+                    logger.error(f"Failed to connect to LLM: {msg}")
                     st.error(msg)
         except Exception as e:
+            logger.exception(f"Configuration Error: {str(e)}")
             st.error(f"Configuration Error: {str(e)}")
 
     st.divider()
@@ -148,9 +155,11 @@ def run_graph(inputs: Any, is_resume: bool = False):
     
     try:
         if is_resume:
+            logger.info("Resuming LangGraph agent after interrupt.")
             # We are responding to an interrupt
             result = st.session_state.graph.invoke(Command(resume=inputs), config=config)
         else:
+            logger.info("Starting new LangGraph agent run.")
             # Initial run
             result = st.session_state.graph.invoke(inputs, config=config)
 
@@ -158,17 +167,20 @@ def run_graph(inputs: Any, is_resume: bool = False):
         # LangGraph surfaces the interrupt payload in result["__interrupt__"]
         interrupts = result.get("__interrupt__", [])
         if interrupts:
+            logger.info(f"Agent paused on interrupt: {interrupts[0].value.get('action')}")
             # We take the first interrupt payload
             st.session_state.current_interrupt = interrupts[0].value
             st.session_state.is_running = False
             return result # Returning the state snapshot
             
         else:
+            logger.info("Agent run completed successfully without interrupts.")
             st.session_state.current_interrupt = None
             st.session_state.is_running = False
             return result
 
     except Exception as e:
+        logger.exception(f"Graph execution failed: {str(e)}")
         st.error(f"Graph execution failed: {str(e)}")
         st.session_state.is_running = False
         return None
@@ -201,16 +213,19 @@ with tab1:
                 for f in uploaded_files:
                     raw_files.append((f.getvalue(), f.name))
                 
+                logger.info(f"Parsing {len(raw_files)} uploaded files.")
                 parsed_docs = parse_multiple_files(raw_files)
                 
                 # Show parsing errors if any
                 has_errors = False
                 for d in parsed_docs:
                     if d.file_type == "unsupported":
+                        logger.error(f"Failed to parse {d.filename}: {d.metadata.get('error')}")
                         st.error(f"Failed to parse {d.filename}: {d.metadata.get('error')}")
                         has_errors = True
                 
                 if not has_errors:
+                    logger.info("All files parsed successfully.")
                     st.success(f"Successfully parsed {len(parsed_docs)} files.")
                     
                     # Add to chat history
@@ -265,6 +280,7 @@ with tab2:
                     "content": user_answer
                 })
                 
+                logger.info("Submitting user clarification answers.")
                 with st.spinner("Generating JSON..."):
                     resume_payload = {
                         "action": "answer",
@@ -307,6 +323,7 @@ with tab3:
                 submit_feedback = st.form_submit_button("Refine JSON")
                 
                 if submit_feedback and feedback:
+                    logger.info("Submitting JSON refinement feedback.")
                     st.session_state.messages.append({
                         "role": "user",
                         "content": f"Requested JSON changes: {feedback}"
@@ -342,6 +359,7 @@ with tab3:
             )
             
             if st.button("✅ Finish Session"):
+                logger.info("User approved JSON and finished session.")
                 run_graph({"action": "approve"}, is_resume=True)
                 st.success("Session completed! You can start a new session from the sidebar.")
                 st.balloons()
