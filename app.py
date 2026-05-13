@@ -146,11 +146,10 @@ if not st.session_state.graph:
     st.info("👈 Please configure and connect to an LLM provider in the sidebar to begin.")
     st.stop()
 
-tab1, tab2, tab3 = st.tabs(["📄 1. Input & Upload", "💬 2. Agent Chat", "📋 3. Output JSON"])
+tab1, tab2 = st.tabs(["💬 1. Chat & Upload", "📋 2. Output JSON"])
 
 # Graph config for persistence
 config = {"configurable": {"thread_id": st.session_state.session_id}}
-
 
 def run_graph(inputs: Any, is_resume: bool = False):
     """Run or resume the LangGraph agent."""
@@ -159,23 +158,17 @@ def run_graph(inputs: Any, is_resume: bool = False):
     try:
         if is_resume:
             logger.info("Resuming LangGraph agent after interrupt.")
-            # We are responding to an interrupt
             result = st.session_state.graph.invoke(Command(resume=inputs), config=config)
         else:
             logger.info("Starting new LangGraph agent run.")
-            # Initial run
             result = st.session_state.graph.invoke(inputs, config=config)
 
-        # Check if the graph paused on an interrupt
-        # LangGraph surfaces the interrupt payload in result["__interrupt__"]
         interrupts = result.get("__interrupt__", [])
         if interrupts:
             logger.info(f"Agent paused on interrupt: {interrupts[0].value.get('action')}")
-            # We take the first interrupt payload
             st.session_state.current_interrupt = interrupts[0].value
             st.session_state.is_running = False
-            return result # Returning the state snapshot
-            
+            return result
         else:
             logger.info("Agent run completed successfully without interrupts.")
             st.session_state.current_interrupt = None
@@ -197,122 +190,35 @@ def run_graph(inputs: Any, is_resume: bool = False):
         return None
 
 # ---------------------------------------------------------------------------
-# Tab 1: Input & Upload
+# Tab 1: Chat & Upload
 # ---------------------------------------------------------------------------
 with tab1:
-    st.markdown("### Upload Documentation")
-    st.markdown(f"Supported formats: {get_supported_formats_display()}")
+    # Display chat history
+    if not st.session_state.messages:
+        st.info("Welcome! Attach your portal documentation (PDF, Word, CSV, etc.) using the paperclip icon in the chat bar below, and optionally type any initial context to begin.")
     
-    uploaded_files = st.file_uploader(
-        "Select files",
-        accept_multiple_files=True,
-        type=["csv", "xlsx", "xls", "md", "html", "htm", "pdf", "docx", "txt", "log", "json", "xml"],
-    )
-
-    st.markdown("### Additional Context (Optional)")
-    user_context = st.text_area(
-        "Provide any additional information about the portal or workflows that isn't in the docs.",
-        height=100,
-    )
-
-    if st.button("🚀 Analyze & Generate Context", type="primary", disabled=st.session_state.is_running):
-        if not uploaded_files:
-            st.warning("Please upload at least one file.")
-        else:
-            with st.spinner("Parsing files..."):
-                raw_files = []
-                for f in uploaded_files:
-                    raw_files.append((f.getvalue(), f.name))
-                
-                logger.info(f"Parsing {len(raw_files)} uploaded files.")
-                parsed_docs = parse_multiple_files(raw_files)
-                
-                # Show parsing errors if any
-                has_errors = False
-                for d in parsed_docs:
-                    if d.file_type == "unsupported":
-                        logger.error(f"Failed to parse {d.filename}: {d.metadata.get('error')}")
-                        st.error(f"Failed to parse {d.filename}: {d.metadata.get('error')}")
-                        has_errors = True
-                
-                if not has_errors:
-                    logger.info("All files parsed successfully.")
-                    st.success(f"Successfully parsed {len(parsed_docs)} files.")
-                    
-                    # Add to chat history
-                    st.session_state.messages.append({
-                        "role": "user", 
-                        "content": f"Uploaded {len(parsed_docs)} files. Context: {user_context}"
-                    })
-                    
-                    # Prepare initial state
-                    inputs = {
-                        "documents": [
-                            {"filename": d.filename, "content": d.content, "file_type": d.file_type}
-                            for d in parsed_docs
-                        ],
-                        "user_inputs": [user_context] if user_context.strip() else [],
-                        "phase": "started"
-                    }
-                    
-                    with st.spinner("Agent is analyzing documents..."):
-                        run_graph(inputs, is_resume=False)
-                        st.rerun()
-
-# ---------------------------------------------------------------------------
-# Tab 2: Agent Chat (Questions)
-# ---------------------------------------------------------------------------
-with tab2:
-    # Display chat history (simplified for UI)
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
-
-    # If we are paused waiting for user clarification
+            
+    # If paused on ask_user, show the agent's question
     if st.session_state.current_interrupt and st.session_state.current_interrupt.get("action") == "ask_user":
         interrupt_data = st.session_state.current_interrupt
-        
         with st.chat_message("assistant"):
             st.markdown(interrupt_data["message"])
             st.markdown(interrupt_data["raw_text"])
-            
-        with st.form("clarification_form"):
-            st.markdown("### Provide Clarifications")
-            user_answer = st.text_area("Your answers:", height=150)
-            submitted = st.form_submit_button("Submit Answers")
-            
-            if submitted:
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": interrupt_data["raw_text"]
-                })
-                st.session_state.messages.append({
-                    "role": "user",
-                    "content": user_answer
-                })
-                
-                logger.info("Submitting user clarification answers.")
-                with st.spinner("Generating JSON..."):
-                    resume_payload = {
-                        "action": "answer",
-                        "answers": [user_answer],
-                        "raw_text": user_answer
-                    }
-                    run_graph(resume_payload, is_resume=True)
-                    st.rerun()
 
 # ---------------------------------------------------------------------------
-# Tab 3: Output JSON (Review & Export)
+# Tab 2: Output JSON
 # ---------------------------------------------------------------------------
-with tab3:
+with tab2:
     if st.session_state.current_interrupt and st.session_state.current_interrupt.get("action") == "review_json":
-        st.success("JSON Generated Successfully!")
+        st.success("JSON Generated Successfully! You can request changes in the Chat tab.")
         
         interrupt_data = st.session_state.current_interrupt
         portal_context = interrupt_data.get("portal_context", {})
         workflows = interrupt_data.get("workflows", [])
         
-        # Display as tabs
         wf_tabs = st.tabs(["🏢 Portal Info"] + [f"📋 Workflow: {wf.get('name', 'Unknown')}" for wf in workflows])
         
         with wf_tabs[0]:
@@ -323,56 +229,124 @@ with tab3:
                 st.json(wf)
                 
         st.divider()
-        st.markdown("### Review & Export")
+        st.markdown("### Approve & Export")
+        st.markdown("If the JSON looks correct, approve it to finish the process and download the files. To request changes, use the Chat tab below.")
         
-        col1, col2 = st.columns([1, 1])
+        # Prepare files for export
+        wf_files = []
+        for wf in workflows:
+            safe_name = sanitize_filename(wf.get("name", "workflow"))
+            wf_id = wf.get("id", f"wf_{len(wf_files)}")
+            filename = f"{wf_id}_{safe_name}.json"
+            wf_files.append((filename, {"workflow": wf}))
+            
+        zip_bytes = create_zip_export(portal_context, wf_files)
         
-        with col1:
-            st.markdown("#### Request Changes")
-            with st.form("feedback_form"):
-                feedback = st.text_area("What should be changed?", placeholder="E.g., The Submit Leave workflow is missing step 4 where the user clicks 'Confirm'.")
-                submit_feedback = st.form_submit_button("Refine JSON")
-                
-                if submit_feedback and feedback:
-                    logger.info("Submitting JSON refinement feedback.")
-                    st.session_state.messages.append({
-                        "role": "user",
-                        "content": f"Requested JSON changes: {feedback}"
-                    })
-                    with st.spinner("Agent is refining JSON..."):
-                        run_graph({
-                            "action": "refine",
-                            "feedback": feedback
-                        }, is_resume=True)
-                        st.rerun()
-                        
-        with col2:
-            st.markdown("#### Approve")
-            st.markdown("If the JSON looks correct, approve it to finish the process and download the files.")
-            
-            # Prepare files for export
-            wf_files = []
-            for wf in workflows:
-                safe_name = sanitize_filename(wf.get("name", "workflow"))
-                wf_id = wf.get("id", f"wf_{len(wf_files)}")
-                filename = f"{wf_id}_{safe_name}.json"
-                # Wrap in {"workflow": {...}} as per schema
-                wf_files.append((filename, {"workflow": wf}))
-                
-            zip_bytes = create_zip_export(portal_context, wf_files)
-            
-            st.download_button(
-                label="📦 Download ZIP Export",
-                data=zip_bytes,
-                file_name=f"portal_context_{sanitize_filename(portal_context.get('portal', {}).get('name', 'export'))}.zip",
-                mime="application/zip",
-                type="primary",
-            )
-            
-            if st.button("✅ Finish Session"):
-                logger.info("User approved JSON and finished session.")
-                run_graph({"action": "approve"}, is_resume=True)
-                st.success("Session completed! You can start a new session from the sidebar.")
-                st.balloons()
+        st.download_button(
+            label="📦 Download ZIP Export",
+            data=zip_bytes,
+            file_name=f"portal_context_{sanitize_filename(portal_context.get('portal', {}).get('name', 'export'))}.zip",
+            mime="application/zip",
+            type="primary",
+        )
+        
+        if st.button("✅ Approve & Finish Session", type="primary"):
+            logger.info("User approved JSON and finished session.")
+            run_graph({"action": "approve"}, is_resume=True)
+            st.success("Session completed! You can start a new session from the sidebar.")
+            st.balloons()
+            st.rerun()
     else:
-        st.info("No JSON generated yet. Complete the steps in the previous tabs.")
+        st.info("No JSON generated yet. Please submit your documents in the Chat tab.")
+
+# ---------------------------------------------------------------------------
+# Global Chat Input Handler
+# ---------------------------------------------------------------------------
+prompt = st.chat_input("Upload documents or type a message...", accept_file="multiple")
+
+if prompt:
+    # Parse prompt (it could be a string or a ChatInputValue)
+    user_text = ""
+    user_files = []
+    
+    if isinstance(prompt, str):
+        user_text = prompt
+    else:
+        user_text = getattr(prompt, "text", "")
+        user_files = getattr(prompt, "files", [])
+
+    if not st.session_state.current_interrupt:
+        # Initial phase: Document Parsing
+        if not user_files and not user_text:
+            st.warning("Please upload files or provide text context.")
+        else:
+            with st.spinner("Parsing files..."):
+                raw_files = [(f.getvalue(), f.name) for f in user_files] if user_files else []
+                parsed_docs = parse_multiple_files(raw_files)
+                
+                # Show errors if any
+                has_errors = False
+                for d in parsed_docs:
+                    if d.file_type == "unsupported":
+                        logger.error(f"Failed to parse {d.filename}: {d.metadata.get('error')}")
+                        st.error(f"Failed to parse {d.filename}: {d.metadata.get('error')}")
+                        has_errors = True
+                
+                if not has_errors:
+                    logger.info("All files parsed successfully.")
+                    
+                    # Add to chat history
+                    file_msg = f"Uploaded {len(parsed_docs)} files. " if parsed_docs else ""
+                    st.session_state.messages.append({
+                        "role": "user", 
+                        "content": f"{file_msg}{user_text}"
+                    })
+                    
+                    inputs = {
+                        "documents": [
+                            {"filename": d.filename, "content": d.content, "file_type": d.file_type}
+                            for d in parsed_docs
+                        ],
+                        "user_inputs": [user_text] if user_text.strip() else [],
+                        "phase": "started"
+                    }
+                    
+                    with st.spinner("Agent is analyzing documents..."):
+                        run_graph(inputs, is_resume=False)
+                        st.rerun()
+
+    elif st.session_state.current_interrupt.get("action") == "ask_user":
+        # Answer questions
+        interrupt_data = st.session_state.current_interrupt
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": interrupt_data["raw_text"]
+        })
+        st.session_state.messages.append({
+            "role": "user",
+            "content": user_text
+        })
+        
+        logger.info("Submitting user clarification answers.")
+        with st.spinner("Generating JSON..."):
+            resume_payload = {
+                "action": "answer",
+                "answers": [user_text],
+                "raw_text": user_text
+            }
+            run_graph(resume_payload, is_resume=True)
+            st.rerun()
+
+    elif st.session_state.current_interrupt.get("action") == "review_json":
+        # Request changes / Refine
+        st.session_state.messages.append({
+            "role": "user",
+            "content": f"Requested JSON changes: {user_text}"
+        })
+        logger.info("Submitting JSON refinement feedback.")
+        with st.spinner("Agent is refining JSON..."):
+            run_graph({
+                "action": "refine",
+                "feedback": user_text
+            }, is_resume=True)
+            st.rerun()

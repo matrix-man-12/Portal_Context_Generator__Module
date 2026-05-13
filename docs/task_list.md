@@ -121,3 +121,11 @@
 - [x] Add error handling for LLM failures / timeouts
 - [x] Write README.md with setup and usage instructions
 - [x] Update this task list with final status
+
+
+## Phase 9: UI Refactoring (Unified Chat)
+- [x] Save UI Refactor Plan to docs
+- [x] Refactor app.py Layout (2 tabs)
+- [x] Implement Unified st.chat_input for files and text
+- [x] Update state routing logic (initial vs answer vs refine)
+- [x] Clean up Output tab (remove redundant feedback forms)

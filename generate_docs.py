@@ -150,6 +150,7 @@ TEMPLATE = """<!DOCTYPE html>
             <li><a href="04_agent_workflow.html" class="{active_4}">4. Agent Workflow</a></li>
             <li><a href="05_output_and_schemas.html" class="{active_5}">5. Output Schemas</a></li>
             <li><a href="06_logging_and_debugging.html" class="{active_6}">6. Logging</a></li>
+            <li><a href="07_ui_refactor_plan.html" class="{active_refactor}">7. UI Refactor</a></li>
             <li><a href="implementation_plan.html" class="{active_plan}">Implementation Plan</a></li>
             <li><a href="task_list.html" class="{active_task}">Task List</a></li>
         </ul>
@@ -392,6 +393,7 @@ for filename, active_key, content in pages:
         page_html = page_html.replace(key, val)
     page_html = page_html.replace("{active_plan}", "")
     page_html = page_html.replace("{active_task}", "")
+    page_html = page_html.replace("{active_refactor}", "")
         
     with open(os.path.join("docs", "HTML_docs", filename), "w", encoding="utf-8") as f:
         f.write(page_html)
@@ -399,7 +401,8 @@ for filename, active_key, content in pages:
 # Generate extra files
 extra_files = [
     ("implementation_plan.md", "implementation_plan.html", "active_plan", "Implementation Plan"),
-    ("task_list.md", "task_list.html", "active_task", "Task List")
+    ("task_list.md", "task_list.html", "active_task", "Task List"),
+    ("07_ui_refactor_plan.md", "07_ui_refactor_plan.html", "active_refactor", "UI Refactor Plan")
 ]
 
 for md_file, html_file, active_key, title in extra_files:
@@ -418,8 +421,9 @@ for md_file, html_file, active_key, title in extra_files:
             page_html = page_html.replace(key, "")
         page_html = page_html.replace("{active_plan}", "active" if active_key == "active_plan" else "")
         page_html = page_html.replace("{active_task}", "active" if active_key == "active_task" else "")
+        page_html = page_html.replace("{active_refactor}", "active" if active_key == "active_refactor" else "")
         
         with open(os.path.join("docs", "HTML_docs", html_file), "w", encoding="utf-8") as f:
             f.write(page_html)
 
-print("Successfully generated 8 HTML docs.")
+print("Successfully generated 9 HTML docs.")

@@ -141,49 +141,42 @@
         <ul class="nav-links">
             <li><a href="01_architecture_overview.html" class="">1. Architecture</a></li>
             <li><a href="02_llm_configuration.html" class="">2. LLM Configuration</a></li>
-            <li><a href="03_document_parsing.html" class="active">3. Document Parsing</a></li>
+            <li><a href="03_document_parsing.html" class="">3. Document Parsing</a></li>
             <li><a href="04_agent_workflow.html" class="">4. Agent Workflow</a></li>
             <li><a href="05_output_and_schemas.html" class="">5. Output Schemas</a></li>
             <li><a href="06_logging_and_debugging.html" class="">6. Logging</a></li>
-            <li><a href="07_ui_refactor_plan.html" class="">7. UI Refactor</a></li>
+            <li><a href="07_ui_refactor_plan.html" class="active">7. UI Refactor</a></li>
             <li><a href="implementation_plan.html" class="">Implementation Plan</a></li>
             <li><a href="task_list.html" class="">Task List</a></li>
         </ul>
     </nav>
 
     <main class="main-content">
-        <h1 class="gradient-text">Document Parsing Pipeline</h1>
-<p>Because documentation can come in a wide variety of formats, the system uses a unified file parsing pipeline (<code>parsers/file_parser.py</code>) to extract clean text for the LLM.</p>
+        <h1>UI Refactor Plan</h1>\n<pre style='white-space: pre-wrap; font-family: Consolas, monospace; font-size: 0.95rem; background: #fff; padding: 1.5rem; border: 1px solid var(--border-color); border-radius: 6px;'># UI Refactoring: Consolidated Chat and Output Views
 
-<h2>Supported Formats</h2>
-<ul class="styled-list">
-  <li><strong>CSV & Excel (.csv, .xlsx, .xls)</strong>: Parsed using <code>pandas</code>. Output is formatted as a Markdown table.</li>
-  <li><strong>Word (.docx)</strong>: Parsed using <code>python-docx</code>. Extracts headings, paragraphs, and tables.</li>
-  <li><strong>PDF (.pdf)</strong>: Parsed using <code>PyPDF2</code>. Extracts raw text page by page.</li>
-  <li><strong>HTML/XML (.html, .xml)</strong>: Parsed using <code>BeautifulSoup4</code>. Strips scripts, styles, and structural tags, keeping only the human-readable text.</li>
-  <li><strong>Markdown & Plaintext (.md, .txt, .log, .json)</strong>: Read directly as UTF-8 strings.</li>
-</ul>
+The current layout uses 3 separate tabs (Input, Chat, and Output), which fragments the user experience. We will streamline this into a two-view architecture, creating a much more cohesive "chat with my documents" flow.
 
-<h2>The Parsing Process</h2>
-<p>When a user uploads files through Streamlit, the <code>parse_multiple_files()</code> function processes them:</p>
-<ol class="styled-list">
-  <li>It identifies the file type by extension.</li>
-  <li>It routes the byte stream to the specific parsing function.</li>
-  <li>It returns a list of <code>ParsedDocument</code> dataclasses containing the filename, type, character count, and raw text.</li>
-</ol>
+## Proposed Changes
 
-<h2>Truncation and Context Limits</h2>
-<p>Large files, especially CSVs or Excels, can quickly exceed the context window limits of an LLM.</p>
-<div class="card-grid">
-  <div class="card">
-    <h3>Table Limits</h3>
-    <p>Excel and CSV files are limited to a preview of their first 100 rows if they exceed 500 rows.</p>
-  </div>
-  <div class="card">
-    <h3>Global Truncation</h3>
-    <p>When the <code>document_processor</code> node consolidates all the text, it enforces a hard cap of <code>200,000</code> characters. If the total combined text is larger, it cuts the document short and appends a <code>[TRUNCATED]</code> warning to prevent LLM payload rejection.</p>
-  </div>
-</div>
+### 1. Tab Consolidation
+- Replace the 3 tabs (`tab1`, `tab2`, `tab3`) with 2 tabs: `💬 Chat Interface` and `📋 Generated Output`.
+- The first tab will handle **both** document ingestion and conversational clarification.
+
+### 2. Unified Input Mechanism
+- Remove the `st.file_uploader` and the dedicated "Generate Portal Context" button.
+- Utilize Streamlit 1.40+'s upgraded `st.chat_input` widget configured with `accept_file="multiple"`.
+- This allows users to drop PDFs, Word Docs, or CSVs directly into the chat input box along with any contextual text messages, exactly like popular LLM interfaces.
+
+### 3. Dynamic State Routing
+- When the user submits the `st.chat_input`:
+  - **If no session is running**: We treat any attached files as the initial portal documentation. The system parses them, appends the user's text as context, and kicks off the LangGraph agent.
+  - **If the agent is paused on an interrupt (`ask_user`)**: We treat the text as the answer to the clarifying questions.
+  - **If the agent is paused on `review_json`**: We treat the text as the "Request Changes" feedback, triggering the `json_refiner` node.
+
+### 4. Streamlined Output View
+- The `📋 Generated Output` tab will only be populated when the JSON is successfully generated.
+- It will contain the workflow tabs, the actual JSON data, and the buttons to **Approve &amp; Export** the ZIP file.
+</pre>
     </main>
 </body>
 </html>
