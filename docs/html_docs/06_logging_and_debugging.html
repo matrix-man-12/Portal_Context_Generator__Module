@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Context Generator Docs</title>
+    <style>
+        :root {
+            --bg-main: #faf9f6;
+            --bg-sidebar: #f0f4f8;
+            --text-main: #333333;
+            --text-muted: #555555;
+            --border-color: #e2e8f0;
+            --accent-bg: #e0f2fe;
+            --accent-border: #bae6fd;
+            --code-bg: #f1f5f9;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            line-height: 1.6;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 250px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .nav-links { list-style: none; }
+        .nav-links li { margin-bottom: 0.25rem; }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            padding: 0.5rem;
+            display: block;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: var(--border-color);
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 250px;
+            padding: 3rem 4rem;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 { font-size: 2.2rem; margin-bottom: 1.5rem; color: #1e293b; }
+        h2 { font-size: 1.5rem; margin: 2rem 0 1rem; color: #334155; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem;}
+        h3 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; color: #475569; }
+        p { margin-bottom: 1rem; }
+        
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.2rem;
+        }
+
+        .card h3 { margin-top: 0; color: #334155; }
+        .card p { margin-bottom: 0; font-size: 0.95rem; }
+
+        /* Lists */
+        .styled-list {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .styled-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            color: #0f172a;
+        }
+
+        p code, li code {
+            background: var(--code-bg);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+        }
+
+        /* Callouts */
+        .callout {
+            background: var(--accent-bg);
+            border-left: 4px solid var(--accent-border);
+            padding: 1rem 1.5rem;
+            border-radius: 0 4px 4px 0;
+            margin: 1.5rem 0;
+        }
+        .callout p { margin-bottom: 0; color: #0f172a; }
+
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <h2>Portal Context</h2>
+        <ul class="nav-links">
+            <li><a href="01_architecture_overview.html" class="">1. Architecture</a></li>
+            <li><a href="02_llm_configuration.html" class="">2. LLM Configuration</a></li>
+            <li><a href="03_document_parsing.html" class="">3. Document Parsing</a></li>
+            <li><a href="04_agent_workflow.html" class="">4. Agent Workflow</a></li>
+            <li><a href="05_output_and_schemas.html" class="">5. Output Schemas</a></li>
+            <li><a href="06_logging_and_debugging.html" class="active">6. Logging</a></li>
+            <li><a href="implementation_plan.html" class="">Implementation Plan</a></li>
+            <li><a href="task_list.html" class="">Task List</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <h1 class="gradient-text">Logging and Debugging</h1>
+<p>The application implements a robust logging system to aid in debugging, monitoring agent behavior, and tracking execution flows without cluttering the Streamlit UI.</p>
+
+<h2>The Logger Utility (<code>utils/logger.py</code>)</h2>
+<p>The application uses Python's built-in <code>logging</code> module, wrapped in a utility function <code>setup_logger(name)</code>. </p>
+
+<div class="card-grid">
+  <div class="card">
+    <h3>Terminal Console (StreamHandler)</h3>
+    <p><strong>Level</strong>: <code>INFO</code> and above.</p>
+    <p><strong>Format</strong>: <code>[LEVEL] logger_name: Message</code></p>
+    <p><strong>Purpose</strong>: Provides short, meaningful, and immediate feedback to the developer running the Streamlit app locally.</p>
+  </div>
+  <div class="card">
+    <h3>File Log (RotatingFileHandler)</h3>
+    <p><strong>Level</strong>: <code>DEBUG</code> and above.</p>
+    <p><strong>Location</strong>: <code>logs/app.log</code></p>
+    <p><strong>Rotation</strong>: Rolls over at 5MB, keeping up to 3 backups.</p>
+    <p><strong>Purpose</strong>: Provides deep, detailed tracing for pinpointing exactly why a parser or LLM call failed.</p>
+  </div>
+</div>
+
+<h2>Key Log Points</h2>
+<ul class="styled-list">
+  <li><strong><code>app.py</code></strong>: User actions, session resets, LLM connections, graph initializations, and interrupts.</li>
+  <li><strong><code>parsers/file_parser.py</code></strong>: Which files are processed, character counts, and specific exceptions (e.g., corrupted PDFs).</li>
+  <li><strong><code>agent/nodes/*.py</code></strong>: Every LangGraph node logs when it starts an LLM invocation, when it completes, how many characters it generated, and logs full stack traces (<code>logger.exception()</code>) if the LLM call fails.</li>
+</ul>
+    </main>
+</body>
+</html>

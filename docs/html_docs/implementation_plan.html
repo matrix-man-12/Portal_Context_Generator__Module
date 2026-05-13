@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Context Generator Docs</title>
+    <style>
+        :root {
+            --bg-main: #faf9f6;
+            --bg-sidebar: #f0f4f8;
+            --text-main: #333333;
+            --text-muted: #555555;
+            --border-color: #e2e8f0;
+            --accent-bg: #e0f2fe;
+            --accent-border: #bae6fd;
+            --code-bg: #f1f5f9;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            line-height: 1.6;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 250px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .nav-links { list-style: none; }
+        .nav-links li { margin-bottom: 0.25rem; }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            padding: 0.5rem;
+            display: block;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: var(--border-color);
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 250px;
+            padding: 3rem 4rem;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 { font-size: 2.2rem; margin-bottom: 1.5rem; color: #1e293b; }
+        h2 { font-size: 1.5rem; margin: 2rem 0 1rem; color: #334155; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem;}
+        h3 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; color: #475569; }
+        p { margin-bottom: 1rem; }
+        
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.2rem;
+        }
+
+        .card h3 { margin-top: 0; color: #334155; }
+        .card p { margin-bottom: 0; font-size: 0.95rem; }
+
+        /* Lists */
+        .styled-list {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .styled-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            color: #0f172a;
+        }
+
+        p code, li code {
+            background: var(--code-bg);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+        }
+
+        /* Callouts */
+        .callout {
+            background: var(--accent-bg);
+            border-left: 4px solid var(--accent-border);
+            padding: 1rem 1.5rem;
+            border-radius: 0 4px 4px 0;
+            margin: 1.5rem 0;
+        }
+        .callout p { margin-bottom: 0; color: #0f172a; }
+
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <h2>Portal Context</h2>
+        <ul class="nav-links">
+            <li><a href="01_architecture_overview.html" class="">1. Architecture</a></li>
+            <li><a href="02_llm_configuration.html" class="">2. LLM Configuration</a></li>
+            <li><a href="03_document_parsing.html" class="">3. Document Parsing</a></li>
+            <li><a href="04_agent_workflow.html" class="">4. Agent Workflow</a></li>
+            <li><a href="05_output_and_schemas.html" class="">5. Output Schemas</a></li>
+            <li><a href="06_logging_and_debugging.html" class="">6. Logging</a></li>
+            <li><a href="implementation_plan.html" class="active">Implementation Plan</a></li>
+            <li><a href="task_list.html" class="">Task List</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <h1>Implementation Plan</h1>\n<pre style='white-space: pre-wrap; font-family: Consolas, monospace; font-size: 0.95rem; background: #fff; padding: 1.5rem; border: 1px solid var(--border-color); border-radius: 6px;'># Portal Context Generator Module — Implementation Plan
+
+&gt; **Status**: FINALIZED  
+&gt; **Date**: 2026-05-13  
+&gt; **Author**: Auto-generated, reviewed and approved by user
+
+---
+
+## 1. Project Overview
+
+The Portal Context Generator Module is part of a larger portal automation ecosystem. Its purpose is to create a **predefined knowledge base** for internal portals by ingesting documentation and user knowledge, then producing well-structured JSON files that describe:
+
+- What a portal is and what it does
+- Individual workflows and their step-by-step UI actions
+- High-level UI interactions (click, select, input, navigate) — NOT DOM-level details
+
+The tool uses an **LLM-powered iterative agent** that asks clarifying questions and refines the output based on user feedback, producing a solid, user-validated portal context.
+
+### How It Fits in the Bigger Picture
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                    Automation Pipeline                     │
+│                                                           │
+│  ┌─────────────────┐    ┌──────────────┐    ┌──────────┐ │
+│  │ Portal Context   │───&gt;│ Browser      │───&gt;│ Task     │ │
+│  │ Generator Module │    │ Agent (DOM)  │    │ Executor │ │
+│  │ (THIS PROJECT)   │    │              │    │          │ │
+│  └─────────────────┘    └──────────────┘    └──────────┘ │
+│         │                                                 │
+│    Structured JSON                                        │
+│    (portal knowledge)                                     │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. Technology Stack
+
+| Concern | Choice | Rationale |
+|---|---|---|
+| **Agent Framework** | **LangGraph** | Built for stateful, iterative, human-in-the-loop workflows. The `interrupt()` primitive lets the LLM pause, ask clarifying questions, and resume. |
+| **LLM Providers** | **Multi-provider** | Gemini (via `langchain-google-genai`), Anthropic Claude (via `langchain-anthropic`), and locally-hosted OpenAI-compatible LLMs (via `langchain-openai` with custom `base_url`). |
+| **UI** | **Streamlit** | Rapid Python-native UI with built-in file uploaders, chat interface, JSON display, and session state. |
+| **Document Parsing** | **Custom parsers** | `pandas` for CSV/Excel, `BeautifulSoup` for HTML, `PyPDF2` for PDF, `python-docx` for Word, direct read for Markdown/Text. |
+| **Persistence** | **SQLite** (LangGraph checkpointer) | Lightweight, zero-config. Stores conversation state for session continuity. |
+| **Schema Validation** | **Pydantic v2** | Defines and validates the output JSON structure. Enables LLM structured output. |
+
+---
+
+## 3. Key Design Decisions
+
+### 3.1 Multi-LLM Support
+
+The application supports three LLM provider types:
+
+1. **Google Gemini** — via `langchain-google-genai`, requires `GOOGLE_API_KEY`
+2. **Anthropic Claude** — via `langchain-anthropic`, requires `ANTHROPIC_API_KEY`
+3. **Local/OpenAI-compatible** — via `langchain-openai` with custom `base_url`, requires the URL and optionally an API key
+
+The UI sidebar allows the user to select the provider and model, enter the appropriate credentials, and (for local LLMs) specify the base URL. Provider selection is validated before agent execution begins.
+
+### 3.2 Split JSON Output
+
+The tool generates **one JSON file per workflow/task**, not a single monolithic file. Additionally, a `_portal_info.json` file contains the top-level portal metadata. This makes individual workflows easy to review, version, and feed into downstream automation.
+
+**Output structure:**
+```
+output/
+├── _portal_info.json           # Portal metadata + UI elements
+├── wf_001_submit_leave.json    # Workflow 1
+├── wf_002_check_payslip.json   # Workflow 2
+└── wf_003_update_profile.json  # Workflow 3
+```
+
+### 3.3 Export
+
+The final approved JSON files are packaged as a **ZIP download**. Users can also download individual workflow JSON files.
+
+### 3.4 No Authentication
+
+Single-user tool. No login required. The user enters their LLM API key directly in the sidebar.
+
+---
+
+## 4. Output JSON Schema
+
+### Portal Info (`_portal_info.json`)
+
+```json
+{
+  "portal": {
+    "name": "Internal HR Portal",
+    "description": "Employee self-service portal for HR operations",
+    "url": "https://hr.internal.company.com",
+    "category": "HR Management"
+  },
+  "ui_elements": {
+    "navigation": ["Dashboard", "Leave Management", "Payroll", "Profile"],
+    "common_actions": ["Login", "Logout", "Search", "Filter"]
+  },
+  "metadata": {
+    "generated_at": "2026-05-13T21:00:00Z",
+    "source_documents": ["leave_policy.pdf", "portal_guide.md"],
+    "version": "1.0",
+    "total_workflows": 3
+  }
+}
+```
+
+### Workflow File (`wf_001_submit_leave.json`)
+
+```json
+{
+  "workflow": {
+    "id": "wf_001",
+    "name": "Submit Leave Request",
+    "description": "End-to-end workflow for submitting a leave/vacation request",
+    "preconditions": [
+      "User must be logged into the HR portal",
+      "User must have remaining leave balance"
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "action": "click",
+        "target": "Leave Management menu item",
+        "target_type": "menu_item",
+        "description": "Navigate to the Leave Management section",
+        "expected_result": "Leave Management page loads with calendar view"
+      },
+      {
+        "step_number": 2,
+        "action": "click",
+        "target": "Apply Leave button",
+        "target_type": "button",
+        "description": "Open the leave application form",
+        "expected_result": "Leave application modal/form appears"
+      },
+      {
+        "step_number": 3,
+        "action": "select_dropdown",
+        "target": "Leave Type dropdown",
+        "target_type": "dropdown",
+        "description": "Select the type of leave",
+        "options": ["Casual Leave", "Sick Leave", "Earned Leave"],
+        "expected_result": "Selected leave type is shown in the dropdown"
+      },
+      {
+        "step_number": 4,
+        "action": "input_date",
+        "target": "Start Date field",
+        "target_type": "date_picker",
+        "description": "Select the start date for leave",
+        "expected_result": "Date is populated in the field"
+      },
+      {
+        "step_number": 5,
+        "action": "input_text",
+        "target": "Reason textarea",
+        "target_type": "text_area",
+        "description": "Enter the reason for leave",
+        "expected_result": "Reason text is entered"
+      },
+      {
+        "step_number": 6,
+        "action": "click",
+        "target": "Submit button",
+        "target_type": "button",
+        "description": "Submit the leave request for approval",
+        "expected_result": "Success message appears, request moves to pending"
+      }
+    ],
+    "postconditions": [
+      "Leave request appears in pending requests list",
+      "Manager receives approval notification"
+    ],
+    "notes": "Steps 3-4 inferred from policy document descriptions"
+  }
+}
+```
+
+### Supported Action Types
+
+| Action | Description |
+|---|---|
+| `click` | Click a button, link, menu item, or other clickable element |
+| `input_text` | Type text into an input field or textarea |
+| `input_date` | Select a date from a date picker |
+| `select_dropdown` | Select an option from a dropdown menu |
+| `toggle` | Toggle a checkbox, switch, or radio button |
+| `upload_file` | Upload a file via file picker |
+| `scroll` | Scroll to a specific section |
+| `hover` | Hover over an element to reveal content |
+| `navigate` | Navigate to a specific URL or page |
+| `wait` | Wait for a page/element to load |
+| `verify` | Verify that an element or message is present |
+
+---
+
+## 5. Architecture &amp; Agent Flow
+
+### 5.1 LangGraph Agent Flow
+
+```
+┌─────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  START   │────&gt;│ Document         │────&gt;│ Context          │
+│          │     │ Processor        │     │ Builder          │
+└─────────┘     └──────────────────┘     └────────┬────────┘
+                                                   │
+                                          ┌────────▼────────┐
+                                          │ Question         │
+                                          │ Generator        │
+                                          └────────┬────────┘
+                                                   │
+                                          ┌────────▼────────┐
+                                          │ INTERRUPT:       │
+                                          │ Ask User         │◄──────┐
+                                          └────────┬────────┘       │
+                                                   │                │
+                                          ┌────────▼────────┐       │
+                                          │ JSON Generator   │       │
+                                          └────────┬────────┘       │
+                                                   │                │
+                                          ┌────────▼────────┐       │
+                                          │ INTERRUPT:       │       │
+                                          │ Review JSON      │       │
+                                          └────────┬────────┘       │
+                                                   │                │
+                                    ┌──────────────┴──────┐         │
+                                    │                     │         │
+                              User approves         User wants      │
+                                    │               changes         │
+                              ┌─────▼─────┐    ┌────────▼────────┐  │
+                              │   END      │    │ JSON Refiner    │──┘
+                              └───────────┘    └─────────────────┘
+```
+
+### 5.2 Node Descriptions
+
+| Node | Responsibility |
+|---|---|
+| **Document Processor** | Parse uploaded files, extract text, create consolidated document summary |
+| **Context Builder** | Use LLM to analyze documents, identify portal purpose, list workflows |
+| **Question Generator** | LLM identifies gaps/ambiguities, generates targeted clarifying questions. Uses `interrupt()` to pause and ask the user. |
+| **JSON Generator** | Produce structured workflow JSONs using LLM with `.with_structured_output()` |
+| **JSON Refiner** | Accept user feedback, apply modifications to JSON. Loops back to review. |
+
+### 5.3 Agent State
+
+```python
+class AgentState(TypedDict):
+    documents: list[dict]            # Parsed document contents
+    user_inputs: list[str]           # Free-text user inputs
+    messages: Annotated[list, add_messages]  # Chat history
+    portal_context: dict | None      # Portal info JSON
+    workflows: list[dict]            # Generated workflow JSONs
+    questions: list[str]             # Pending clarifying questions
+    phase: str                       # "processing" | "questioning" | "generating" | "refining"
+    iteration: int                   # Refinement iteration count
+```
+
+---
+
+## 6. Project Structure
+
+```
+Portal_Context_Generator_Module/
+├── docs/
+│   ├── implementation_plan.md       # This document
+│   └── task_list.md                 # Development task tracker
+│
+├── app.py                           # Streamlit UI entry point
+├── requirements.txt                 # Python dependencies
+├── .env.example                     # Environment variable template
+│
+├── agent/
+│   ├── __init__.py
+│   ├── graph.py                     # LangGraph agent definition
+│   ├── state.py                     # Agent state schema
+│   ├── nodes/
+│   │   ├── __init__.py
+│   │   ├── document_processor.py    # Parse &amp; summarize documents
+│   │   ├── context_builder.py       # Build initial portal context
+│   │   ├── question_generator.py    # Generate clarifying questions
+│   │   ├── json_generator.py        # Produce structured JSON
+│   │   └── json_refiner.py          # Refine JSON from feedback
+│   └── prompts/
+│       ├── __init__.py
+│       └── templates.py             # All LLM prompt templates
+│
+├── parsers/
+│   ├── __init__.py
+│   └── file_parser.py               # Unified file parsing
+│
+├── schemas/
+│   ├── __init__.py
+│   └── portal_schema.py             # Pydantic output schema models
+│
+├── utils/
+│   ├── __init__.py
+│   └── helpers.py                   # Shared utilities
+│
+└── output/                          # Generated JSON output directory
+    └── .gitkeep
+```
+
+---
+
+## 7. UI Layout (Streamlit)
+
+### Sidebar
+- **LLM Provider** selector: Gemini / Claude / Local (OpenAI-compatible)
+- **Model name** input (for local LLMs)
+- **Base URL** input (for local LLMs)
+- **API Key** input (password-masked)
+- **Session management**: New session / Resume
+
+### Main Area — Three Tabs
+
+**Tab 1: "📄 Input &amp; Upload"**
+- Multi-file uploader (CSV, Excel, MD, HTML, PDF, DOCX, TXT)
+- File list with type badges and remove buttons
+- Free-text area for additional context/instructions
+- "🚀 Generate Portal Context" button
+
+**Tab 2: "💬 Agent Chat"**
+- Chat interface with agent questions and user responses
+- Phase progress indicator
+- Input field for answering questions
+
+**Tab 3: "📋 Output JSON"**
+- Tab-bar of generated workflow files
+- Pretty-printed JSON display per workflow
+- "Request Changes" text input + button (sends feedback to refiner)
+- "✅ Approve &amp; Export" button → ZIP download
+- Individual file download buttons
+
+---
+
+## 8. Dependencies
+
+```
+streamlit&gt;=1.40.0
+langgraph&gt;=0.4.0
+langchain&gt;=0.3.0
+langchain-core&gt;=0.3.0
+langchain-google-genai&gt;=2.0.0
+langchain-anthropic&gt;=0.3.0
+langchain-openai&gt;=0.3.0
+pydantic&gt;=2.0.0
+pandas&gt;=2.0.0
+openpyxl&gt;=3.1.0
+beautifulsoup4&gt;=4.12.0
+PyPDF2&gt;=3.0.0
+python-docx&gt;=1.0.0
+python-dotenv&gt;=1.0.0
+```
+
+---
+
+## 9. Verification Plan
+
+### Automated
+1. Parse sample files of each type → verify extracted text
+2. Validate generated JSON against Pydantic schemas
+3. Run agent with mock LLM → verify state transitions
+
+### Manual
+1. Full end-to-end: upload docs → answer questions → verify JSON → export
+2. Test all three LLM providers
+3. Test iterative refinement loop (request changes → verify updates)
+4. Test ZIP export and individual file downloads
+</pre>
+    </main>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Context Generator Docs</title>
+    <style>
+        :root {
+            --bg-main: #faf9f6;
+            --bg-sidebar: #f0f4f8;
+            --text-main: #333333;
+            --text-muted: #555555;
+            --border-color: #e2e8f0;
+            --accent-bg: #e0f2fe;
+            --accent-border: #bae6fd;
+            --code-bg: #f1f5f9;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            line-height: 1.6;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 250px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .nav-links { list-style: none; }
+        .nav-links li { margin-bottom: 0.25rem; }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            padding: 0.5rem;
+            display: block;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: var(--border-color);
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 250px;
+            padding: 3rem 4rem;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 { font-size: 2.2rem; margin-bottom: 1.5rem; color: #1e293b; }
+        h2 { font-size: 1.5rem; margin: 2rem 0 1rem; color: #334155; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem;}
+        h3 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; color: #475569; }
+        p { margin-bottom: 1rem; }
+        
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.2rem;
+        }
+
+        .card h3 { margin-top: 0; color: #334155; }
+        .card p { margin-bottom: 0; font-size: 0.95rem; }
+
+        /* Lists */
+        .styled-list {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .styled-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            color: #0f172a;
+        }
+
+        p code, li code {
+            background: var(--code-bg);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+        }
+
+        /* Callouts */
+        .callout {
+            background: var(--accent-bg);
+            border-left: 4px solid var(--accent-border);
+            padding: 1rem 1.5rem;
+            border-radius: 0 4px 4px 0;
+            margin: 1.5rem 0;
+        }
+        .callout p { margin-bottom: 0; color: #0f172a; }
+
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <h2>Portal Context</h2>
+        <ul class="nav-links">
+            <li><a href="01_architecture_overview.html" class="">1. Architecture</a></li>
+            <li><a href="02_llm_configuration.html" class="">2. LLM Configuration</a></li>
+            <li><a href="03_document_parsing.html" class="">3. Document Parsing</a></li>
+            <li><a href="04_agent_workflow.html" class="">4. Agent Workflow</a></li>
+            <li><a href="05_output_and_schemas.html" class="active">5. Output Schemas</a></li>
+            <li><a href="06_logging_and_debugging.html" class="">6. Logging</a></li>
+            <li><a href="implementation_plan.html" class="">Implementation Plan</a></li>
+            <li><a href="task_list.html" class="">Task List</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <h1 class="gradient-text">Output and Schemas</h1>
+<p>To ensure that downstream automation scripts (like UI automation bots) receive predictable and strongly typed data, the Portal Context Generator strictly enforces output formats using Pydantic schemas.</p>
+
+<h2>Schemas (<code>schemas/portal_schema.py</code>)</h2>
+<p>We define three primary Pydantic <code>BaseModel</code> classes:</p>
+
+<div class="card-grid">
+  <div class="card">
+    <h3>1. PortalContext</h3>
+    <p>Describes the global properties of the platform.</p>
+    <ul class="styled-list" style="margin-top:0.5rem; margin-bottom:0;">
+      <li><code>id</code>, <code>name</code>, <code>url</code>, <code>description</code></li>
+      <li><code>global_navigation</code></li>
+      <li><code>user_roles</code></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>2. Workflow</h3>
+    <p>Describes an individual, distinct task.</p>
+    <ul class="styled-list" style="margin-top:0.5rem; margin-bottom:0;">
+      <li><code>id</code>, <code>name</code>, <code>trigger</code></li>
+      <li><code>steps</code>: ordered list of actions</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>3. GeneratedOutput</h3>
+    <p>A wrapper schema holding one <code>PortalContext</code> and a list of <code>Workflow</code> objects. This is what the LLM generates.</p>
+  </div>
+</div>
+
+<h2>Enforcement Mechanism</h2>
+<p>We use LangChain's <code>.with_structured_output(GeneratedOutput)</code> method inside the <code>json_generator</code> node. This forces the LLM to output valid JSON that matches the exact keys, types, and nested arrays defined in the Pydantic classes.</p>
+
+<h2>Export Format</h2>
+<div class="callout">
+  <p>When the user clicks "Download ZIP Export", the Streamlit app generates an archive containing:</p>
+  <ul class="styled-list" style="margin-top:1rem; margin-bottom:0;">
+    <li><code>_portal_info.json</code>: Contains the <code>PortalContext</code> data.</li>
+    <li><code>&lt;workflow_id&gt;_&lt;workflow_name&gt;.json</code>: One JSON file for each workflow identified, containing the steps to execute that specific task.</li>
+  </ul>
+</div>
+<p>This segmented approach allows automation systems to load generic portal metadata once, and then load specific workflow JSONs only when those tasks need to be executed.</p>
+    </main>
+</body>
+</html>
